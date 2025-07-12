@@ -10,25 +10,6 @@ export default function ContactsPage() {
     phone: "",
     message: ""
   });
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSubmitted, setIsSubmitted] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    
-    // Имитация отправки (пока нет backend)
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    setIsSubmitted(true);
-    setIsSubmitting(false);
-    
-    // Сброс формы через 3 секунды
-    setTimeout(() => {
-      setIsSubmitted(false);
-      setFormData({ name: "", email: "", phone: "", message: "" });
-    }, 3000);
-  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData(prev => ({
@@ -40,14 +21,14 @@ export default function ContactsPage() {
   return (
     <div className="min-h-screen bg-slate-50">
       <Header />
-      
+
       <main className="container mx-auto py-12 px-4 max-w-4xl">
         <div className="text-center mb-12">
           <h1 className="text-3xl sm:text-4xl font-bold text-slate-800 mb-4">
-            Разместите свой проект
+            Свяжитесь с нами
           </h1>
           <p className="text-slate-600 text-lg">
-            Привлекайте больше клиентов через URPAK.KG
+            Готовы помочь найти идеальную недвижимость в Кыргызстане
           </p>
         </div>
 
@@ -57,19 +38,14 @@ export default function ContactsPage() {
             <h2 className="text-2xl font-semibold text-slate-800 mb-6">
               Напишите нам
             </h2>
-            
-            {isSubmitted ? (
-              <div className="text-center py-8">
-                <div className="text-6xl mb-4">✅</div>
-                <h3 className="text-xl font-semibold text-green-600 mb-2">
-                  Сообщение отправлено!
-                </h3>
-                <p className="text-slate-600">
-                  Мы свяжемся с вами в ближайшее время
-                </p>
-              </div>
-            ) : (
-              <form onSubmit={handleSubmit} className="space-y-6">
+
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+              <p className="text-yellow-800 text-sm">
+                📧 Форма находится в разработке. Пока свяжитесь с нами по телефону или email
+              </p>
+            </div>
+
+            <form className="space-y-6">
                 <div>
                   <label className="block text-slate-700 font-medium mb-2">
                     Ваше имя *
@@ -137,7 +113,6 @@ export default function ContactsPage() {
                   Форма находится в разработке
                 </button>
               </form>
-            )}
           </div>
 
           {/* Контактная информация */}
@@ -168,7 +143,7 @@ export default function ContactsPage() {
                   </div>
                   <div>
                     <h3 className="font-semibold text-slate-800 mb-1">Email</h3>
-                    <p className="text-slate-600">coming-soon@urpak.kg</p>
+                    <p className="text-slate-600">info@urpak.kg</p>
                   </div>
                 </div>
 
