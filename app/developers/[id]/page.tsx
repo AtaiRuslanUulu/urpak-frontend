@@ -66,7 +66,7 @@ export default function DeveloperDetailPage() {
           setDeveloper(devData);
           setProjects(projData || []);
         }
-      } catch (e) {
+      } catch {
         if (!cancelled) setError("Не удалось загрузить информацию о застройщике");
       } finally {
         if (!cancelled) setLoading(false);
