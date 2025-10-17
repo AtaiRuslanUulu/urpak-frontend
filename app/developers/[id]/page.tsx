@@ -66,7 +66,7 @@ export default function DeveloperDetailPage() {
           setDeveloper(devData);
           setProjects(projData || []);
         }
-      } catch (e) {
+      } catch () {
         if (!cancelled) setError("Не удалось загрузить информацию о застройщике");
       } finally {
         if (!cancelled) setLoading(false);
@@ -248,7 +248,7 @@ export default function DeveloperDetailPage() {
                 <div className="flex-1">
                   <select
                     value={filterCity}
-                    onChange={(e) => setFilterCity(e.target.value)}
+                    onChange={() => setFilterCity(e.target.value)}
                     className="select"
                   >
                     <option value="">Все города</option>
