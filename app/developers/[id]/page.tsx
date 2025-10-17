@@ -248,7 +248,7 @@ export default function DeveloperDetailPage() {
                 <div className="flex-1">
                   <select
                     value={filterCity}
-                    onChange={() => setFilterCity(e.target.value)}
+                    onChange={(e) => setFilterCity(e.target.value)}
                     className="select"
                   >
                     <option value="">Все города</option>
