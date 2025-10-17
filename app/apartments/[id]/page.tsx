@@ -54,28 +54,22 @@ export default function ApartmentDetailPage() {
   useEffect(() => {
     if (!id) return;
     let cancelled = false;
-    setLoading(true);
-    setError(null);
-
-    fetch(`${API_BASE}/api/apartments/${id}/`, { cache: "no-store" })
-      .then((res) => {
+    (async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const res = await fetch(`${API_BASE}/api/apartments/${id}/`, { cache: "no-store" });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.json();
-      })
-      .then((data: Apartment) => {
+        const data: Apartment = await res.json();
         if (!cancelled) setApartment(data);
-      })
-      .catch((err) => {
-        if (!cancelled) {
-          console.error("Ошибка загрузки квартиры:", err);
-          setError("Не удалось загрузить информацию о квартире");
-        }
-      })
-      .finally(() => !cancelled && setLoading(false));
-
-    return () => {
-      cancelled = true;
-    };
+      } catch (err) {
+        console.error("Ошибка загрузки квартиры:", err);
+        if (!cancelled) setError("Не удалось загрузить информацию о квартире");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
   }, [id, API_BASE]);
 
   const formatPriceKGS = (price: number) =>
@@ -87,26 +81,18 @@ export default function ApartmentDetailPage() {
 
   const getStatusColor = (status: string = "available") => {
     switch (status) {
-      case "available":
-        return "bg-green-100 text-green-800";
-      case "reserved":
-        return "bg-yellow-100 text-yellow-800";
-      case "sold":
-        return "bg-red-100 text-red-800";
-      default:
-        return "bg-gray-100 text-gray-800";
+      case "available": return "bg-green-100 text-green-800";
+      case "reserved":  return "bg-yellow-100 text-yellow-800";
+      case "sold":      return "bg-red-100 text-red-800";
+      default:          return "bg-gray-100 text-gray-800";
     }
   };
   const getStatusText = (status: string = "available") => {
     switch (status) {
-      case "available":
-        return "Доступна";
-      case "reserved":
-        return "Забронирована";
-      case "sold":
-        return "Продана";
-      default:
-        return "Неизвестно";
+      case "available": return "Доступна";
+      case "reserved":  return "Забронирована";
+      case "sold":      return "Продана";
+      default:          return "Неизвестно";
     }
   };
 
@@ -118,9 +104,17 @@ export default function ApartmentDetailPage() {
     return { down, loanAmount, monthly };
   }, [apartment?.price]);
 
+  // Закрытие модалки по Esc
+  useEffect(() => {
+    if (!showContactForm) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setShowContactForm(false); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [showContactForm]);
+
   if (!id) {
     return (
-      <div className="container py-16 text-center">
+      <div className="container mx-auto max-w-4xl px-4 py-16 text-center">
         <h1 className="text-lg font-semibold">Некорректный адрес страницы</h1>
         <Link href="/projects" className="btn-secondary mt-4">← К проектам</Link>
       </div>
@@ -129,7 +123,7 @@ export default function ApartmentDetailPage() {
 
   if (loading) {
     return (
-      <div className="container max-w-4xl py-12">
+      <div className="container mx-auto max-w-4xl px-4 py-12">
         <div className="animate-pulse">
           <div className="mb-6 h-6 w-3/4 rounded bg-accent" />
           <div className="card">
@@ -147,11 +141,11 @@ export default function ApartmentDetailPage() {
 
   if (error || !apartment) {
     return (
-      <div className="container max-w-4xl py-16 text-center">
+      <div className="container mx-auto max-w-4xl px-4 py-16 text-center">
         <h1 className="text-2xl font-semibold">{error || "Квартира не найдена"}</h1>
         <div className="mt-4 flex items-center justify-center gap-3">
           <Link href="/projects" className="btn-secondary">← К проектам</Link>
-          <button onClick={() => window.location.reload()} className="btn-primary">Попробовать снова</button>
+          <button type="button" onClick={() => window.location.reload()} className="btn-primary">Попробовать снова</button>
         </div>
       </div>
     );
@@ -159,11 +153,12 @@ export default function ApartmentDetailPage() {
 
   const mainImage =
     apartment.project.main_image_url ||
-    (apartment.project.images?.length ? apartment.project.images[0].url : "") ||
+    apartment.project.images?.[0]?.url ||
     "";
 
   return (
-    <div className="container max-w-4xl py-8">
+    <div className="container mx-auto max-w-4xl px-4 py-8">
+      {/* Хлебные крошки */}
       <nav className="mb-6 text-sm text-muted">
         <Link href="/projects" className="hover:underline">Проекты</Link>
         <span className="mx-2">→</span>
@@ -174,6 +169,7 @@ export default function ApartmentDetailPage() {
         <span className="text-fg">Квартира {apartment.apartment_number || `#${apartment.id}`}</span>
       </nav>
 
+      {/* Карточка */}
       <div className="mb-6 overflow-hidden rounded-2xl border border-border bg-card">
         {mainImage ? (
           <Image
@@ -182,11 +178,14 @@ export default function ApartmentDetailPage() {
             width={1600}
             height={900}
             className="h-64 w-full object-cover md:h-80"
+            priority
           />
         ) : (
           <div className="h-64 w-full bg-accent md:h-80" />
         )}
+
         <div className="p-6 md:p-8">
+          {/* Заголовок */}
           <div className="mb-6 flex flex-col gap-1">
             <h1 className="text-2xl font-semibold md:text-3xl">
               {apartment.rooms}-комнатная квартира
@@ -194,6 +193,7 @@ export default function ApartmentDetailPage() {
             <p className="text-muted">в проекте {apartment.project.name}</p>
           </div>
 
+          {/* Характеристики */}
           <div className="mb-8 grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6">
             <div className="rounded-xl bg-accent p-4 text-center">
               <div className="mb-1 text-2xl font-semibold text-fg">{apartment.rooms}</div>
@@ -215,6 +215,7 @@ export default function ApartmentDetailPage() {
             </div>
           </div>
 
+          {/* Цена */}
           <div className="mb-8 rounded-xl bg-orange-50 p-6 text-center">
             <div className="mb-2 text-3xl font-bold text-[hsl(var(--primary))]">
               {formatPriceKGS(apartment.price)}
@@ -222,6 +223,7 @@ export default function ApartmentDetailPage() {
             <div className="text-muted">Общая стоимость • {formatPriceUSD(apartment.price)}</div>
           </div>
 
+          {/* Сводка + ипотека */}
           <div className="mb-8 grid gap-4 md:grid-cols-2">
             <div className="card">
               <h3 className="mb-3 text-sm font-semibold">О проекте</h3>
@@ -240,10 +242,7 @@ export default function ApartmentDetailPage() {
                 </div>
                 <div className="flex justify-between gap-3">
                   <span className="text-muted">Застройщик</span>
-                  <Link
-                    href={`/developers/${apartment.project.developer.id}`}
-                    className="text-primary hover:underline"
-                  >
+                  <Link href={`/developers/${apartment.project.developer.id}`} className="text-primary hover:underline">
                     {apartment.project.developer.name}
                   </Link>
                 </div>
@@ -261,7 +260,7 @@ export default function ApartmentDetailPage() {
                   <div className="text-muted">Сумма кредита</div>
                   <div className="mt-1 font-semibold">{formatPriceKGS(loan.loanAmount)}</div>
                 </div>
-                <div className="rounded-xl bg-accent p-3 col-span-2">
+                <div className="col-span-2 rounded-xl bg-accent p-3">
                   <div className="text-muted">Платёж в мес. (≈1%)</div>
                   <div className="mt-1 text-lg font-semibold">
                     {formatPriceKGS(loan.monthly)} <span className="text-xs text-muted">в мес.</span>
@@ -274,13 +273,13 @@ export default function ApartmentDetailPage() {
             </div>
           </div>
 
+          {/* Действия */}
           <div className="mb-2 flex items-center justify-between">
             <span className={`rounded-full px-3 py-1 text-xs font-medium ${getStatusColor(apartment.status)}`}>
               {getStatusText(apartment.status)}
             </span>
-
             <div className="flex gap-3">
-              <button onClick={() => setShowContactForm(true)} className="btn-primary">
+              <button type="button" onClick={() => setShowContactForm(true)} className="btn-primary">
                 Связаться с застройщиком
               </button>
               <Link href={`/projects/${apartment.project.id}`} className="btn-secondary">
@@ -291,17 +290,26 @@ export default function ApartmentDetailPage() {
         </div>
       </div>
 
+      {/* Модалка контактов */}
       {showContactForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setShowContactForm(false)}
+        >
+          <div
+            className="w-full max-w-md rounded-2xl border border-border bg-card p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
             <h3 className="mb-2 text-xl font-semibold">Связаться с застройщиком</h3>
             <p className="mb-4 text-sm text-muted">
               Оставьте контакты, и представитель {apartment.project.developer.name} свяжется с вами.
             </p>
             <form className="space-y-3">
-              <input type="text" placeholder="Ваше имя" className="input" />
-              <input type="tel" placeholder="Номер телефона" className="input" />
-              <textarea placeholder="Сообщение (необязательно)" rows={3} className="input" />
+              <input name="name" type="text" placeholder="Ваше имя" className="input" />
+              <input name="phone" type="tel" placeholder="Номер телефона" className="input" />
+              <textarea name="message" placeholder="Сообщение (необязательно)" rows={3} className="input" />
               <div className="flex gap-2 pt-1">
                 <button type="button" className="btn-primary flex-1">Отправить заявку</button>
                 <button type="button" onClick={() => setShowContactForm(false)} className="btn-secondary flex-1">

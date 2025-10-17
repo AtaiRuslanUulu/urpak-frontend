@@ -40,13 +40,14 @@ interface Project {
   price_per_m2: number;
   description?: string;
   main_image_url?: string;
-  images: ProjectImage[];
-  apartments: Apartment[];
+  images?: ProjectImage[];
+  apartments?: Apartment[];
 }
 
 export default function ProjectDetailPage() {
   const params = useParams() as { id?: string };
   const id = params?.id;
+
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -56,33 +57,31 @@ export default function ProjectDetailPage() {
     process.env.NEXT_PUBLIC_API_BASE?.replace(/\/$/, "") ||
     process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ||
     "http://127.0.0.1:8000";
+
   const API_URL = id ? `${API_BASE}/api/projects/${id}/` : null;
 
+  // курс можно вынести в .env
   const USD_TO_KGS = 85;
 
   useEffect(() => {
     if (!API_URL) return;
     let cancelled = false;
-    setLoading(true);
-    setError(null);
 
-    fetch(API_URL, { cache: "no-store" })
-      .then((res) => {
+    (async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const res = await fetch(API_URL, { cache: "no-store" });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.json();
-      })
-      .then((data: Project) => {
+        const data: Project = await res.json();
         if (!cancelled) setProject(data);
-      })
-      .catch((err) => {
-        if (!cancelled) {
-          console.error("Ошибка загрузки проекта:", err);
-          setError("Не удалось загрузить проект");
-        }
-      })
-      .finally(() => {
+      } catch (err) {
+        console.error("Ошибка загрузки проекта:", err);
+        if (!cancelled) setError("Не удалось загрузить проект");
+      } finally {
         if (!cancelled) setLoading(false);
-      });
+      }
+    })();
 
     return () => {
       cancelled = true;
@@ -95,16 +94,14 @@ export default function ProjectDetailPage() {
   const formatPriceUSD = (price: number) =>
     `$${price.toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("ru-RU", {
+  const formatDate = (dateString: string) =>
+    new Date(dateString).toLocaleDateString("ru-RU", {
       year: "numeric",
       month: "long",
       day: "numeric",
     });
-  };
 
-  const getStatusColor = (status: string = "available") => {
+  const getStatusColor = (status = "available") => {
     switch (status) {
       case "available":
         return "bg-green-100 text-green-800";
@@ -117,7 +114,7 @@ export default function ProjectDetailPage() {
     }
   };
 
-  const getStatusText = (status: string = "available") => {
+  const getStatusText = (status = "available") => {
     switch (status) {
       case "available":
         return "Доступна";
@@ -132,7 +129,7 @@ export default function ProjectDetailPage() {
 
   if (!id) {
     return (
-      <div className="container py-16 text-center">
+      <div className="container mx-auto max-w-6xl px-4 py-16 text-center">
         <h1 className="text-lg font-semibold">Некорректный адрес страницы</h1>
         <Link href="/projects" className="btn-secondary mt-4">
           ← К списку проектов
@@ -143,11 +140,11 @@ export default function ProjectDetailPage() {
 
   if (loading) {
     return (
-      <div className="container py-12 max-w-6xl">
+      <div className="container mx-auto max-w-6xl px-4 py-12">
         <div className="animate-pulse">
-          <div className="h-7 w-3/4 rounded bg-accent mb-3" />
-          <div className="h-4 w-1/2 rounded bg-accent mb-2" />
-          <div className="h-4 w-2/3 rounded bg-accent mb-4" />
+          <div className="mb-3 h-7 w-3/4 rounded bg-accent" />
+          <div className="mb-2 h-4 w-1/2 rounded bg-accent" />
+          <div className="mb-4 h-4 w-2/3 rounded bg-accent" />
           <div className="h-48 w-full rounded-2xl bg-accent" />
         </div>
       </div>
@@ -156,7 +153,7 @@ export default function ProjectDetailPage() {
 
   if (error || !project) {
     return (
-      <div className="container py-16 text-center">
+      <div className="container mx-auto max-w-6xl px-4 py-16 text-center">
         <h1 className="text-2xl font-semibold">{error || "Проект не найден"}</h1>
         <Link href="/projects" className="btn-secondary mt-4">
           ← Вернуться к списку проектов
@@ -166,12 +163,11 @@ export default function ProjectDetailPage() {
   }
 
   const mainImage =
-    project.main_image_url ||
-    (project.images?.length ? project.images[0].url : "") ||
-    "";
+    project.main_image_url || (project.images?.[0]?.url ?? "");
 
   return (
-    <div className="container py-12 max-w-6xl">
+    <div className="container mx-auto max-w-6xl px-4 py-12">
+      {/* Хлебные крошки */}
       <nav className="mb-6 text-sm text-muted">
         <Link href="/projects" className="hover:underline">
           Новостройки
@@ -180,12 +176,14 @@ export default function ProjectDetailPage() {
         <span className="text-fg">{project.name}</span>
       </nav>
 
+      {/* Основной блок */}
       <div className="mb-8 rounded-2xl border border-border bg-card p-6">
         <div className="grid gap-8 lg:grid-cols-2">
+          {/* Левая колонка */}
           <div>
-            <h1 className="text-3xl font-bold mb-4">{project.name}</h1>
+            <h1 className="mb-4 text-3xl font-bold">{project.name}</h1>
 
-            <div className="space-y-3 mb-6">
+            <div className="mb-6 space-y-3">
               <div className="flex items-center">
                 <span className="w-32 text-sm text-muted">Город:</span>
                 <span className="text-fg">{project.city}</span>
@@ -211,8 +209,9 @@ export default function ProjectDetailPage() {
               </div>
             </div>
 
+            {/* Застройщик */}
             <div className="border-t border-border pt-6">
-              <h3 className="text-lg font-semibold mb-3">Застройщик</h3>
+              <h3 className="mb-3 text-lg font-semibold">Застройщик</h3>
               <Link
                 href={`/developers/${project.developer.id}`}
                 className="flex items-center gap-3 rounded-xl p-3 transition hover:bg-accent"
@@ -226,14 +225,14 @@ export default function ProjectDetailPage() {
                     className="rounded-full object-cover"
                   />
                 ) : (
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent text-muted text-xs">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent text-xs text-muted">
                     logo
                   </div>
                 )}
                 <div>
                   <p className="font-medium">{project.developer.name}</p>
                   {project.developer.description && (
-                    <p className="text-sm text-muted line-clamp-2">
+                    <p className="line-clamp-2 text-sm text-muted">
                       {project.developer.description}
                     </p>
                   )}
@@ -242,6 +241,7 @@ export default function ProjectDetailPage() {
             </div>
           </div>
 
+          {/* Правая колонка (картинка) */}
           <div>
             {mainImage ? (
               <Image
@@ -260,23 +260,26 @@ export default function ProjectDetailPage() {
           </div>
         </div>
 
+        {/* Описание */}
         {project.description && (
           <div className="mt-8 border-t border-border pt-6">
-            <h3 className="text-lg font-semibold mb-3">О проекте</h3>
+            <h3 className="mb-3 text-lg font-semibold">О проекте</h3>
             <p className="leading-relaxed text-muted">{project.description}</p>
           </div>
         )}
       </div>
 
-      {project.images?.length > 0 && (
+      {/* Галерея */}
+      {project.images?.length ? (
         <div className="mb-8 rounded-2xl border border-border bg-card p-6">
           <h2 className="mb-6 text-xl font-semibold">Галерея проекта</h2>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
             {project.images.map((img) => (
               <button
-                key={img.position}
+                key={`${img.position}-${img.url}`}
                 className="group overflow-hidden rounded-xl"
                 onClick={() => setSelectedImage(img.url)}
+                aria-label="Открыть изображение"
               >
                 <Image
                   src={img.url}
@@ -292,9 +295,10 @@ export default function ProjectDetailPage() {
             ))}
           </div>
         </div>
-      )}
+      ) : null}
 
-      {project.apartments?.length > 0 && (
+      {/* Квартиры */}
+      {project.apartments?.length ? (
         <div className="rounded-2xl border border-border bg-card p-6">
           <h2 className="mb-6 text-xl font-semibold">
             Доступные квартиры ({project.apartments.length})
@@ -317,7 +321,9 @@ export default function ProjectDetailPage() {
                 {project.apartments.map((apt) => (
                   <tr key={apt.id} className="border-b border-border transition hover:bg-accent">
                     <td className="px-4 py-4">
-                      <span className="font-medium">{apt.apartment_number || `#${apt.id}`}</span>
+                      <span className="font-medium">
+                        {apt.apartment_number || `#${apt.id}`}
+                      </span>
                     </td>
                     <td className="px-4 py-4 text-muted">{apt.floor}</td>
                     <td className="px-4 py-4 text-muted">{apt.rooms}</td>
@@ -325,7 +331,9 @@ export default function ProjectDetailPage() {
                     <td className="px-4 py-4">
                       <div className="flex flex-col">
                         <span className="font-semibold">{formatPriceKGS(apt.price)}</span>
-                        <span className="text-xs text-muted">({formatPriceUSD(apt.price)})</span>
+                        <span className="text-xs text-muted">
+                          ({formatPriceUSD(apt.price)})
+                        </span>
                       </div>
                     </td>
                     <td className="px-4 py-4">
@@ -338,7 +346,10 @@ export default function ProjectDetailPage() {
                       </span>
                     </td>
                     <td className="px-4 py-4">
-                      <Link href={`/apartments/${apt.id}`} className="text-sm text-primary hover:underline">
+                      <Link
+                        href={`/apartments/${apt.id}`}
+                        className="text-sm text-primary hover:underline"
+                      >
                         Подробнее →
                       </Link>
                     </td>
@@ -348,14 +359,18 @@ export default function ProjectDetailPage() {
             </table>
           </div>
         </div>
-      )}
+      ) : null}
 
+      {/* Модалка изображения */}
       {selectedImage && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
           onClick={() => setSelectedImage(null)}
         >
-          <div className="relative max-h-[90vh] max-w-4xl">
+          <div
+            className="relative max-h-[90vh] max-w-4xl"
+            onClick={(e) => e.stopPropagation()}
+          >
             <Image
               src={selectedImage}
               alt="Увеличенное изображение"

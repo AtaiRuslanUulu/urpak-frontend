@@ -126,7 +126,7 @@ export default function DeveloperDetailPage() {
 
   if (!id) {
     return (
-      <div className="container py-16 text-center">
+      <div className="container mx-auto max-w-6xl py-16 text-center">
         <h1 className="text-lg font-semibold">Некорректный адрес страницы</h1>
         <Link href="/developers" className="btn-secondary mt-4">← К списку застройщиков</Link>
       </div>
@@ -135,7 +135,7 @@ export default function DeveloperDetailPage() {
 
   if (loading) {
     return (
-      <div className="container py-12 max-w-6xl">
+      <div className="container mx-auto max-w-6xl py-12">
         <div className="animate-pulse">
           <div className="mb-8 flex items-center gap-6">
             <div className="h-24 w-24 rounded-full bg-accent" />
@@ -144,9 +144,9 @@ export default function DeveloperDetailPage() {
               <div className="h-4 w-96 rounded bg-accent" />
             </div>
           </div>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid justify-items-center gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="card">
+              <div key={i} className="card w-full max-w-sm">
                 <div className="mb-3 h-40 w-full rounded-xl bg-accent" />
                 <div className="mb-2 h-4 w-2/3 rounded bg-accent" />
                 <div className="h-3 w-1/2 rounded bg-accent" />
@@ -160,7 +160,7 @@ export default function DeveloperDetailPage() {
 
   if (error || !developer) {
     return (
-      <div className="container py-16 text-center">
+      <div className="container mx-auto max-w-6xl py-16 text-center">
         <h1 className="text-2xl font-semibold">{error || "Застройщик не найден"}</h1>
         <div className="mt-4 flex items-center justify-center gap-3">
           <Link href="/developers" className="btn-secondary">← К списку застройщиков</Link>
@@ -171,14 +171,14 @@ export default function DeveloperDetailPage() {
   }
 
   return (
-    <div className="container py-8 max-w-6xl">
+    <div className="container mx-auto max-w-6xl py-8">
       <nav className="mb-6 text-sm text-muted">
         <Link href="/developers" className="hover:underline">Застройщики</Link>
         <span className="mx-2">→</span>
         <span className="text-fg">{developer.name}</span>
       </nav>
 
-      <div className="mb-6 rounded-2xl border border-border bg-card p-6 md:p-8">
+      <div className="mx-auto mb-6 rounded-2xl border border-border bg-card p-6 md:p-8">
         <div className="flex flex-col items-start gap-6 md:flex-row md:items-center">
           <div className="flex-shrink-0">
             {developer.logo_url ? (
@@ -237,7 +237,7 @@ export default function DeveloperDetailPage() {
       </div>
 
       {projects.length > 0 && (
-        <div className="rounded-2xl border border-border bg-card p-6 md:p-8">
+        <div className="mx-auto rounded-2xl border border-border bg-card p-6 md:p-8">
           <div className="mb-6">
             <h2 className="mb-4 text-xl font-semibold md:text-2xl">
               Проекты ({filteredAndSortedProjects.length})
@@ -276,15 +276,15 @@ export default function DeveloperDetailPage() {
           </div>
 
           {filteredAndSortedProjects.length > 0 ? (
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid justify-items-center gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {filteredAndSortedProjects.map((project) => {
                 const img =
                   project.main_image_url ||
                   (project.images?.length ? project.images[0].url : "") ||
                   "";
                 return (
-                  <Link key={project.id} href={`/projects/${project.id}`}>
-                    <article className="card h-full p-4 hover:shadow-md transition">
+                  <Link key={project.id} href={`/projects/${project.id}`} className="w-full max-w-sm">
+                    <article className="card h-full cursor-pointer rounded-xl p-4 transition hover:shadow-md">
                       <div className="mb-4 overflow-hidden rounded-xl">
                         {img ? (
                           <Image
@@ -306,14 +306,12 @@ export default function DeveloperDetailPage() {
                         <p>Сдача: {formatDate(project.completion_date)}</p>
                       </div>
 
-                      <div className="mt-3 border-t border-border pt-3">
-                        <div className="text-right">
-                          <div className="text-base font-semibold">
-                            {formatPriceKGS(project.price_per_m2)}
-                          </div>
-                          <div className="text-xs text-muted">
-                            {formatPriceUSD(project.price_per_m2)} за м²
-                          </div>
+                      <div className="mt-3 border-t border-border pt-3 text-right">
+                        <div className="text-base font-semibold">
+                          {formatPriceKGS(project.price_per_m2)}
+                        </div>
+                        <div className="text-xs text-muted">
+                          {formatPriceUSD(project.price_per_m2)} за м²
                         </div>
                       </div>
                     </article>
@@ -337,7 +335,7 @@ export default function DeveloperDetailPage() {
         </div>
       )}
 
-      <div className="mt-6 rounded-2xl bg-gradient-to-r from-orange-500 to-orange-600 p-6 text-center text-white md:p-8">
+      <div className="mx-auto mt-6 rounded-2xl bg-gradient-to-r from-orange-500 to-orange-600 p-6 text-center text-white md:p-8">
         <h3 className="mb-2 text-xl font-bold">Заинтересовались проектами {developer.name}?</h3>
         <p className="mb-4 text-orange-100">Свяжитесь с нами для получения подробной консультации</p>
         <Link href="/contacts" className="btn bg-white text-orange-600 hover:bg-orange-50">
