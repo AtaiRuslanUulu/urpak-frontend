@@ -18,7 +18,7 @@ export default function Home() {
   };
 
   return (
-    <div className="relative">
+    <div className="relative overflow-x-clip">
       <div className="hero-spot-a" />
       <div className="hero-spot-b" />
 

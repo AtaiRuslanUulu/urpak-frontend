@@ -122,7 +122,6 @@
   .bg-accent { background-color: hsl(var(--accent)); }
 }
 
-/* декоративные пятна */
 .hero-spot-a {
   position: absolute; inset: auto auto 0 -120px;
   width: 520px; height: 520px; border-radius: 9999px;
@@ -136,4 +135,12 @@
   filter: blur(48px);
   background: radial-gradient(closest-side, hsl(var(--secondary) / .16), transparent);
   pointer-events: none;
+}
+
+html, body {
+  overflow-x: clip;
+}
+
+@supports not (overflow: clip) {
+  html, body { overflow-x: hidden; }
 }
