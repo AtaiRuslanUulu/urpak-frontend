@@ -37,8 +37,9 @@ export default function Developers() {
       try {
         const res = await fetch(API_URL, { cache: "no-store" });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data: Developer[] = await res.json();
-        if (!cancelled) setDevelopers(data || []);
+        const raw = await res.json();
+        const data: Developer[] = Array.isArray(raw) ? raw : raw.results || [];
+        if (!cancelled) setDevelopers(data);
       } catch (err) {
         console.error("Ошибка загрузки застройщиков:", err);
         if (!cancelled) setError("Не удалось загрузить застройщиков");
