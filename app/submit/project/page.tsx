@@ -16,6 +16,11 @@ function apiBase() {
   return base;
 }
 
+// API отдаёт либо массив, либо { count, next, previous, results }
+function asList<T>(data: unknown): T[] {
+  return Array.isArray(data) ? data : ((data as { results?: T[] } | null)?.results ?? []);
+}
+
 function SubmitProjectForm() {
   const sp = useSearchParams();
   const presetDev = sp.get('developer') || '';
@@ -45,7 +50,7 @@ function SubmitProjectForm() {
   useEffect(() => {
     fetch(`${apiBase()}/api/developers/`)
       .then(r => r.json())
-      .then((arr: Dev[]) => setDevs(arr))
+      .then(data => setDevs(asList<Dev>(data)))
       .catch(() => setDevs([]));
   }, []);
 

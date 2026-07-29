@@ -16,6 +16,11 @@ function apiBase() {
   return base;
 }
 
+// API отдаёт либо массив, либо { count, next, previous, results }
+function asList<T>(data: unknown): T[] {
+  return Array.isArray(data) ? data : ((data as { results?: T[] } | null)?.results ?? []);
+}
+
 function SubmitApartmentForm() {
   const sp = useSearchParams();
   const presetDev = sp.get('developer') || '';
@@ -41,8 +46,8 @@ function SubmitApartmentForm() {
   });
 
   useEffect(() => {
-    fetch(`${apiBase()}/api/developers/`).then(r=>r.json()).then(setDevelopers).catch(()=>{});
-    fetch(`${apiBase()}/api/projects/`).then(r=>r.json()).then(setProjects).catch(()=>{});
+    fetch(`${apiBase()}/api/developers/`).then(r=>r.json()).then(d=>setDevelopers(asList<Dev>(d))).catch(()=>{});
+    fetch(`${apiBase()}/api/projects/`).then(r=>r.json()).then(d=>setProjects(asList<Proj>(d))).catch(()=>{});
   }, []);
 
   const filteredProjects = useMemo(
