@@ -22,7 +22,7 @@ interface Developer {
 
 interface Apartment {
   id: number;
-  floor: number;
+  floor: number | null;
   rooms: number;
   size_m2: number;
   price: number;
@@ -325,7 +325,7 @@ export default function ProjectDetailPage() {
                         {apt.apartment_number || `#${apt.id}`}
                       </span>
                     </td>
-                    <td className="px-4 py-4 text-muted">{apt.floor}</td>
+                    <td className="px-4 py-4 text-muted">{apt.floor ?? "—"}</td>
                     <td className="px-4 py-4 text-muted">{apt.rooms}</td>
                     <td className="px-4 py-4 text-muted">{apt.size_m2} м²</td>
                     <td className="px-4 py-4">
