@@ -112,16 +112,6 @@
   }
 }
 
-@layer utilities {
-  .bg-primary { background-color: hsl(var(--primary)); }
-  .text-primary-foreground { color: hsl(var(--primary-foreground)); }
-  .bg-card { background-color: hsl(var(--card)); }
-  .text-fg { color: hsl(var(--fg)); }
-  .text-muted { color: hsl(var(--muted)); }
-  .border-border { border-color: hsl(var(--border)); }
-  .bg-accent { background-color: hsl(var(--accent)); }
-}
-
 .hero-spot-a {
   position: absolute; inset: auto auto 0 -120px;
   width: 520px; height: 520px; border-radius: 9999px;

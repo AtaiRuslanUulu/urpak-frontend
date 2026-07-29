@@ -1,7 +1,20 @@
-/** @type {import('next').NextConfig} */
-const nextConfig = {
+import type { NextConfig } from "next";
+
+const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
+      // Логотипы застройщиков и картинки проектов
+      {
+        protocol: "https",
+        hostname: "urpak.s3.eu-central-1.amazonaws.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "api.urpak.kg",
+        pathname: "/media/**",
+      },
+      // Локальная разработка против Django на 8000 порту
       {
         protocol: "http",
         hostname: "127.0.0.1",
