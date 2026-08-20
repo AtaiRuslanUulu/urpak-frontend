@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import AgentOnly from "@/components/AgentOnly";
@@ -93,6 +94,21 @@ function Profile() {
           {user?.is_manager ? " · Руководитель" : ""}
         </p>
 
+        {!user?.agent && (
+          <div className="card mb-6">
+            <h2 className="mb-2 text-sm font-semibold">Профиля агента нет</h2>
+            <p className="text-sm text-muted">
+              Вы вошли под учётной записью без карточки агента — обычно это
+              администратор сайта. Чтобы вести объекты и попадать в фильтр
+              «Куратор», заведите себе агента в{" "}
+              <Link href="/settings/agents" className="underline underline-offset-2">
+                настройках
+              </Link>{" "}
+              и укажите этот же логин.
+            </p>
+          </div>
+        )}
+
         <form onSubmit={saveContacts} className="card mb-6">
           <h2 className="mb-3 text-sm font-semibold">Мои контакты</h2>
           <p className="mb-3 text-xs text-muted">
@@ -132,7 +148,9 @@ function Profile() {
             <p className="mt-3 text-sm text-primary">{contactErrors.detail}</p>
           )}
           <div className="mt-4 flex items-center gap-3">
-            <button className="btn btn-primary">Сохранить</button>
+            <button className="btn btn-primary" disabled={!user?.agent}>
+              Сохранить
+            </button>
             {contactsSaved && <span className="text-sm text-muted">Сохранено</span>}
           </div>
         </form>
