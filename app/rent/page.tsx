@@ -6,23 +6,19 @@ import ListingsBrowser from "@/components/ListingsBrowser";
 import type { FilterKey } from "@/components/FiltersBar";
 
 const FIELDS: FilterKey[] = [
-  "id", "q", "property_type", "complex", "floor", "condition",
-  "rooms", "status", "district", "price_min", "price_max", "area",
-  "curator",
+  "id", "property_type", "floor", "condition", "rooms", "status",
+  "district", "price_min", "price_max", "curator",
 ];
 
 const TABS = [
   { key: "all", label: "Все варианты" },
   { key: "mine", label: "Мои варианты" },
-  { key: "alternative", label: "Альтернатива" },
-  { key: "exclusive", label: "Эксклюзив" },
-  { key: "barter", label: "Бартер" },
 ];
 
-export default function VariantsPage() {
+export default function RentPage() {
   return (
     <Suspense fallback={<div className="container py-16 text-center text-sm text-muted">Загрузка…</div>}>
-      <ListingsBrowser heading="Варианты" dealType="sale" fields={FIELDS} tabs={TABS} />
+      <ListingsBrowser heading="Аренда" dealType="rent" fields={FIELDS} tabs={TABS} />
     </Suspense>
   );
 }

@@ -6,11 +6,25 @@ import Image from "next/image";
 import { HiMenu, HiX } from "react-icons/hi";
 import { usePathname } from "next/navigation";
 import ThemeToggle from "@/components/ThemeToggle";
+import { useAuth } from "@/components/AuthProvider";
+
+const PUBLIC_LINKS = [
+  { href: "/", label: "Варианты" },
+  { href: "/rent", label: "Аренда" },
+];
+
+const AGENT_LINKS = [
+  { href: "/trash", label: "Удаленные" },
+  { href: "/invoices", label: "Счета" },
+];
 
 export default function Header() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
+  const { user, logout } = useAuth();
   const LOGO_URL = process.env.NEXT_PUBLIC_LOGO_URL || "/favicon.ico";
+
+  const links = user ? [...PUBLIC_LINKS, ...AGENT_LINKS] : PUBLIC_LINKS;
 
   const NavLink = ({ href, label }: { href: string; label: string }) => {
     const active = pathname === href;
@@ -25,9 +39,27 @@ export default function Header() {
     );
   };
 
+  const AuthControl = () => {
+    if (user) {
+      return (
+        <button
+          onClick={() => {
+            logout();
+            setOpen(false);
+          }}
+          className="text-sm text-muted hover:text-fg"
+          title={user.agent?.full_name || user.username}
+        >
+          Выйти
+        </button>
+      );
+    }
+    return <NavLink href="/login" label="Вход" />;
+  };
+
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-card/90 backdrop-blur">
-      <div className="mx-auto flex h-14 items-center justify-between px-4 md:px-6 max-w-6xl">
+      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 md:px-6">
         <Link href="/" className="flex items-center gap-3">
           <Image
             src={LOGO_URL}
@@ -39,17 +71,20 @@ export default function Header() {
           <span className="text-base font-semibold">URPAK.KG</span>
         </Link>
 
-        <nav className="hidden md:flex items-center gap-6">
-          <NavLink href="/" label="Главная" />
-          <NavLink href="/projects" label="Новостройки" />
-          <NavLink href="/developers" label="Застройщики" />
-          <NavLink href="/contacts" label="Контакты" />
+        <nav className="hidden items-center gap-6 md:flex">
+          {links.map((link) => (
+            <NavLink key={link.href} {...link} />
+          ))}
+          {user?.agent && (
+            <span className="text-sm text-muted">{user.agent.full_name}</span>
+          )}
+          <AuthControl />
         </nav>
 
         <div className="flex items-center gap-2">
           <ThemeToggle />
           <button
-            className="md:hidden inline-flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-card"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-card md:hidden"
             onClick={() => setOpen((v) => !v)}
             aria-label="Меню"
           >
@@ -59,13 +94,17 @@ export default function Header() {
       </div>
 
       {open && (
-        <nav className="md:hidden border-t border-border bg-card">
-          <div className="px-4 md:px-6 py-3 max-w-6xl mx-auto">
+        <nav className="border-t border-border bg-card md:hidden">
+          <div className="mx-auto max-w-6xl px-4 py-3 md:px-6">
             <ul className="flex flex-col gap-3">
-              <li><NavLink href="/" label="Главная" /></li>
-              <li><NavLink href="/projects" label="Новостройки" /></li>
-              <li><NavLink href="/developers" label="Застройщики" /></li>
-              <li><NavLink href="/contacts" label="Контакты" /></li>
+              {links.map((link) => (
+                <li key={link.href}>
+                  <NavLink {...link} />
+                </li>
+              ))}
+              <li>
+                <AuthControl />
+              </li>
             </ul>
           </div>
         </nav>

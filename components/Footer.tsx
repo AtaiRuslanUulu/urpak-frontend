@@ -7,16 +7,15 @@ export default function Footer() {
         <div className="flex flex-col items-center sm:items-start">
           <div className="text-xl font-semibold mb-2">URPAK.KG</div>
           <p className="text-sm text-muted leading-relaxed max-w-xs">
-            Новостройки и проверенные застройщики Кыргызстана — всё в одном месте.
+            База объектов недвижимости: продажа и аренда, подбор вариантов под запрос клиента.
           </p>
         </div>
 
         <div>
           <div className="text-sm font-semibold mb-3">Разделы</div>
           <ul className="space-y-2 text-sm text-muted">
-            <li><Link href="/" className="hover:text-foreground transition">Главная</Link></li>
-            <li><Link href="/projects" className="hover:text-foreground transition">Новостройки</Link></li>
-            <li><Link href="/developers" className="hover:text-foreground transition">Застройщики</Link></li>
+            <li><Link href="/" className="hover:text-foreground transition">Варианты</Link></li>
+            <li><Link href="/rent" className="hover:text-foreground transition">Аренда</Link></li>
             <li><Link href="/contacts" className="hover:text-foreground transition">Контакты</Link></li>
           </ul>
         </div>
