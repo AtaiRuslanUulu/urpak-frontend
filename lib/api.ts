@@ -1,6 +1,7 @@
 // lib/api.ts — тонкий клиент к /api/agency/ с JWT и обновлением токена.
 import type {
-  CurrentUser, Deal, Dictionaries, Listing, Paginated,
+  AgentRow, CurrentUser, Deal, Dictionaries, DictionaryEntry, DictionaryKind,
+  Listing, Paginated,
 } from "./types";
 
 const API_BASE =
@@ -139,6 +140,60 @@ export const api = {
 
   removeImage: (listingId: number | string, imageId: number) =>
     request<void>(`/listings/${listingId}/images/${imageId}/`, { method: "DELETE" }),
+
+  updateProfile: (body: Record<string, unknown>) =>
+    request<CurrentUser>("/auth/me/", {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+
+  changePassword: (currentPassword: string, newPassword: string) =>
+    request<{ detail: string }>("/auth/password/", {
+      method: "POST",
+      body: JSON.stringify({
+        current_password: currentPassword,
+        new_password: newPassword,
+      }),
+    }),
+
+  agents: () => request<AgentRow[]>("/agents/"),
+
+  createAgent: (body: Record<string, unknown>) =>
+    request<AgentRow>("/agents/", { method: "POST", body: JSON.stringify(body) }),
+
+  updateAgent: (id: number, body: Record<string, unknown>) =>
+    request<AgentRow>(`/agents/${id}/`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+
+  deactivateAgent: (id: number) =>
+    request<void>(`/agents/${id}/`, { method: "DELETE" }),
+
+  dictionaryEntries: (kind: DictionaryKind) =>
+    request<DictionaryEntry[]>(`/dictionaries/${kind}/`),
+
+  createDictionaryEntry: (kind: DictionaryKind, name: string) =>
+    request<DictionaryEntry>(`/dictionaries/${kind}/`, {
+      method: "POST",
+      body: JSON.stringify({ name }),
+    }),
+
+  updateDictionaryEntry: (
+    kind: DictionaryKind,
+    id: number,
+    body: Record<string, unknown>
+  ) =>
+    request<DictionaryEntry>(`/dictionaries/${kind}/${id}/`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+
+  /** Занятое значение сервер прячет вместо удаления и говорит об этом. */
+  deleteDictionaryEntry: (kind: DictionaryKind, id: number) =>
+    request<{ detail?: string } | void>(`/dictionaries/${kind}/${id}/`, {
+      method: "DELETE",
+    }),
 
   deals: () => request<Paginated<Deal>>("/deals/"),
 

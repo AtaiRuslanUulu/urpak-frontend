@@ -122,5 +122,43 @@ export interface CurrentUser {
   id: number;
   username: string;
   is_staff: boolean;
+  is_manager: boolean;
   agent: AgentItem | null;
 }
+
+/** Агент в разделе управления — с логином и ролью. */
+export interface AgentRow {
+  id: number;
+  username: string;
+  full_name: string;
+  phone: string;
+  whatsapp: string;
+  telegram: string;
+  is_active: boolean;
+  is_manager: boolean;
+  listings_count: number;
+}
+
+export interface DictionaryEntry {
+  id: number;
+  name: string;
+  position: number;
+  is_active: boolean;
+}
+
+/** Ключи совпадают с /api/agency/dictionaries/<kind>/ */
+export type DictionaryKind =
+  | "property_types"
+  | "districts"
+  | "series"
+  | "complexes"
+  | "conditions"
+  | "statuses"
+  | "stages"
+  | "lines"
+  | "wall_materials"
+  | "heatings"
+  | "sewerages"
+  | "furniture_options"
+  | "documents"
+  | "payment_conditions";

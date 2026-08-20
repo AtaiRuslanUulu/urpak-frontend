@@ -18,16 +18,24 @@ const AGENT_LINKS = [
   { href: "/invoices", label: "Счета" },
 ];
 
+const MANAGER_LINKS = [{ href: "/settings/agents", label: "Настройки" }];
+
 export default function Header() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const { user, logout } = useAuth();
   const LOGO_URL = process.env.NEXT_PUBLIC_LOGO_URL || "/favicon.ico";
 
-  const links = user ? [...PUBLIC_LINKS, ...AGENT_LINKS] : PUBLIC_LINKS;
+  const links = user
+    ? [
+        ...PUBLIC_LINKS,
+        ...AGENT_LINKS,
+        ...(user.is_manager ? MANAGER_LINKS : []),
+      ]
+    : PUBLIC_LINKS;
 
   const NavLink = ({ href, label }: { href: string; label: string }) => {
-    const active = pathname === href;
+    const active = pathname === href || pathname.startsWith(`${href}/`);
     return (
       <Link
         href={href}
@@ -75,8 +83,8 @@ export default function Header() {
           {links.map((link) => (
             <NavLink key={link.href} {...link} />
           ))}
-          {user?.agent && (
-            <span className="text-sm text-muted">{user.agent.full_name}</span>
+          {user && (
+            <NavLink href="/profile" label={user.agent?.full_name || user.username} />
           )}
           <AuthControl />
         </nav>
@@ -102,6 +110,14 @@ export default function Header() {
                   <NavLink {...link} />
                 </li>
               ))}
+              {user && (
+                <li>
+                  <NavLink
+                    href="/profile"
+                    label={user.agent?.full_name || user.username}
+                  />
+                </li>
+              )}
               <li>
                 <AuthControl />
               </li>

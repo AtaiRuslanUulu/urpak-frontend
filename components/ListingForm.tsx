@@ -4,7 +4,9 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
+import { useAuth } from "@/components/AuthProvider";
 import { ApiError, api } from "@/lib/api";
+import { FIELD_TO_KIND } from "@/lib/dictionaries";
 import type { Dictionaries, DictItem, Listing } from "@/lib/types";
 
 type FormValue = string | boolean | string[];
@@ -80,7 +82,11 @@ interface Props {
 
 export default function ListingForm({ listing, defaultDealType = "sale" }: Props) {
   const router = useRouter();
+  const { user } = useAuth();
   const [dictionaries, setDictionaries] = useState<Dictionaries | null>(null);
+  const [addingFor, setAddingFor] = useState<string | null>(null);
+  const [newEntry, setNewEntry] = useState("");
+  const [addError, setAddError] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>({ ...EMPTY, deal_type: defaultDealType });
   const [files, setFiles] = useState<File[]>([]);
   const [images, setImages] = useState(listing?.images ?? []);
@@ -192,7 +198,87 @@ export default function ListingForm({ listing, defaultDealType = "sale" }: Props
     setImages((prev) => prev.filter((img) => img.id !== imageId));
   };
 
-  const Err = ({ name }: { name: string }) =>
+  /** Руководителю не нужно уходить в справочники, чтобы завести новый ЖК. */
+  const saveDictionaryEntry = async (name: string) => {
+    const kind = FIELD_TO_KIND[name];
+    const value = newEntry.trim();
+    if (!kind || !value) return;
+    setAddError(null);
+    try {
+      const created = await api.createDictionaryEntry(kind, value);
+      setDictionaries((prev) =>
+        prev ? { ...prev, [kind]: [...prev[kind], { id: created.id, name: created.name }] } : prev
+      );
+      if (MULTI_FIELDS.includes(name)) toggleInList(name, String(created.id));
+      else set(name, String(created.id));
+      setAddingFor(null);
+      setNewEntry("");
+    } catch (err) {
+      setAddError(
+        err instanceof ApiError
+          ? err.fieldErrors().name || "Не удалось добавить"
+          : "Не удалось добавить"
+      );
+    }
+  };
+
+  const addEntryLink = (name: string) => {
+    if (!user?.is_manager || !FIELD_TO_KIND[name]) return null;
+    return (
+      <button
+        type="button"
+        className="text-xs text-muted underline-offset-2 hover:text-fg hover:underline"
+        onClick={() => {
+          setAddingFor(name);
+          setNewEntry("");
+          setAddError(null);
+        }}
+      >
+        + добавить
+      </button>
+    );
+  };
+
+  const addEntryForm = (name: string) => {
+    if (addingFor !== name) return null;
+    return (
+      <div className="mt-2">
+        <div className="flex gap-2">
+          <input
+            className="input"
+            placeholder="Новое значение"
+            value={newEntry}
+            autoFocus
+            onChange={(e) => setNewEntry(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                saveDictionaryEntry(name);
+              }
+              if (e.key === "Escape") setAddingFor(null);
+            }}
+          />
+          <button
+            type="button"
+            className="btn btn-primary px-3"
+            onClick={() => saveDictionaryEntry(name)}
+          >
+            ОК
+          </button>
+          <button
+            type="button"
+            className="btn btn-secondary px-3"
+            onClick={() => setAddingFor(null)}
+          >
+            ✕
+          </button>
+        </div>
+        {addError && <p className="mt-1 text-xs text-primary">{addError}</p>}
+      </div>
+    );
+  };
+
+  const err = (name: string) =>
     errors[name] ? <p className="mt-1 text-xs text-primary">{errors[name]}</p> : null;
 
   const select = (
@@ -202,7 +288,10 @@ export default function ListingForm({ listing, defaultDealType = "sale" }: Props
     emptyLabel: string | null = "Не указано"
   ) => (
     <div key={name}>
-      <label className="mb-1 block text-sm text-muted">{label}</label>
+      <div className="mb-1 flex items-baseline justify-between gap-2">
+        <label className="text-sm text-muted">{label}</label>
+        {addEntryLink(name)}
+      </div>
       <select
         className="select"
         value={asString(form[name])}
@@ -215,7 +304,8 @@ export default function ListingForm({ listing, defaultDealType = "sale" }: Props
           </option>
         ))}
       </select>
-      <Err name={name} />
+      {addEntryForm(name)}
+      {err(name)}
     </div>
   );
 
@@ -228,7 +318,7 @@ export default function ListingForm({ listing, defaultDealType = "sale" }: Props
         value={asString(form[name])}
         onChange={(e) => set(name, e.target.value)}
       />
-      <Err name={name} />
+      {err(name)}
     </div>
   );
 
@@ -240,7 +330,7 @@ export default function ListingForm({ listing, defaultDealType = "sale" }: Props
         value={asString(form[name])}
         onChange={(e) => set(name, e.target.value)}
       />
-      <Err name={name} />
+      {err(name)}
     </div>
   );
 
@@ -260,7 +350,10 @@ export default function ListingForm({ listing, defaultDealType = "sale" }: Props
     const chosen = asList(form[name]);
     return (
       <div key={name}>
-        <label className="mb-2 block text-sm text-muted">{label}</label>
+        <div className="mb-2 flex items-baseline justify-between gap-2">
+          <label className="text-sm text-muted">{label}</label>
+          {addEntryLink(name)}
+        </div>
         <div className="flex flex-wrap gap-2">
           {options.map((option) => {
             const id = String(option.id);
@@ -281,7 +374,8 @@ export default function ListingForm({ listing, defaultDealType = "sale" }: Props
             );
           })}
         </div>
-        <Err name={name} />
+        {addEntryForm(name)}
+        {err(name)}
       </div>
     );
   };
