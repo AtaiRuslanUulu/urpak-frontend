@@ -7,7 +7,13 @@ import { useEffect, useState } from "react";
 import { ApiError, api } from "@/lib/api";
 import type { Dictionaries, DictItem, Listing } from "@/lib/types";
 
-type FormState = Record<string, string | boolean>;
+type FormValue = string | boolean | string[];
+type FormState = Record<string, FormValue>;
+
+/** Коммуникации трёхпозиционные: "" — не указано, иначе "true"/"false". */
+const TRISTATE_FIELDS = ["has_gas", "has_electricity", "has_water", "has_topography"];
+const MULTI_FIELDS = ["documents", "payment_conditions"];
+const FLAG_FIELDS = ["is_urgent", "is_exclusive", "is_alternative", "is_barter"];
 
 const EMPTY: FormState = {
   deal_type: "sale",
@@ -18,10 +24,23 @@ const EMPTY: FormState = {
   condition: "",
   status: "",
   curator: "",
+  stage: "",
+  line: "",
+  wall_material: "",
+  heating: "",
+  sewerage: "",
+  furniture: "",
+  documents: [],
+  payment_conditions: [],
   rooms: "",
   floor: "",
   total_floors: "",
   area_m2: "",
+  built_date: "",
+  has_gas: "",
+  has_electricity: "",
+  has_water: "",
+  has_topography: "",
   price: "",
   currency: "USD",
   landmark: "",
@@ -29,6 +48,7 @@ const EMPTY: FormState = {
   owner_phone: "",
   address: "",
   internal_note: "",
+  sale_reason: "",
   is_urgent: false,
   is_exclusive: false,
   is_alternative: false,
@@ -39,6 +59,19 @@ const ROOMS: DictItem[] = [
   { id: "0", name: "Студия" },
   ...Array.from({ length: 6 }, (_, i) => ({ id: String(i + 1), name: `${i + 1}-ком` })),
 ];
+
+const YES_NO: DictItem[] = [
+  { id: "true", name: "Да" },
+  { id: "false", name: "Нет" },
+];
+
+const asString = (value: FormValue | undefined) =>
+  typeof value === "string" ? value : "";
+
+const asList = (value: FormValue | undefined) => (Array.isArray(value) ? value : []);
+
+const triState = (value: boolean | null | undefined) =>
+  value === null || value === undefined ? "" : String(value);
 
 interface Props {
   listing?: Listing;
@@ -69,10 +102,23 @@ export default function ListingForm({ listing, defaultDealType = "sale" }: Props
       condition: String(listing.condition?.id ?? ""),
       status: String(listing.status?.id ?? ""),
       curator: String(listing.curator?.id ?? ""),
+      stage: String(listing.stage?.id ?? ""),
+      line: String(listing.line?.id ?? ""),
+      wall_material: String(listing.wall_material?.id ?? ""),
+      heating: String(listing.heating?.id ?? ""),
+      sewerage: String(listing.sewerage?.id ?? ""),
+      furniture: String(listing.furniture?.id ?? ""),
+      documents: (listing.documents ?? []).map((d) => String(d.id)),
+      payment_conditions: (listing.payment_conditions ?? []).map((c) => String(c.id)),
       rooms: listing.rooms === null ? "" : String(listing.rooms),
       floor: listing.floor === null ? "" : String(listing.floor),
       total_floors: listing.total_floors === null ? "" : String(listing.total_floors),
       area_m2: listing.area_m2 ?? "",
+      built_date: listing.built_date ?? "",
+      has_gas: triState(listing.has_gas),
+      has_electricity: triState(listing.has_electricity),
+      has_water: triState(listing.has_water),
+      has_topography: triState(listing.has_topography),
       price: listing.price ?? "",
       currency: listing.currency,
       landmark: listing.landmark ?? "",
@@ -80,6 +126,7 @@ export default function ListingForm({ listing, defaultDealType = "sale" }: Props
       owner_phone: listing.owner_phone ?? "",
       address: listing.address ?? "",
       internal_note: listing.internal_note ?? "",
+      sale_reason: listing.sale_reason ?? "",
       is_urgent: listing.is_urgent,
       is_exclusive: listing.is_exclusive,
       is_alternative: listing.is_alternative,
@@ -88,8 +135,19 @@ export default function ListingForm({ listing, defaultDealType = "sale" }: Props
     setImages(listing.images);
   }, [listing]);
 
-  const set = (key: string, value: string | boolean) =>
+  const set = (key: string, value: FormValue) =>
     setForm((prev) => ({ ...prev, [key]: value }));
+
+  const toggleInList = (key: string, id: string) =>
+    setForm((prev) => {
+      const current = asList(prev[key]);
+      return {
+        ...prev,
+        [key]: current.includes(id)
+          ? current.filter((value) => value !== id)
+          : [...current, id],
+      };
+    });
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -98,10 +156,17 @@ export default function ListingForm({ listing, defaultDealType = "sale" }: Props
 
     const body = new FormData();
     for (const [key, value] of Object.entries(form)) {
-      if (typeof value === "boolean") {
+      if (MULTI_FIELDS.includes(key)) {
+        const list = asList(value);
+        // Пустая строка = «снято всё»: иначе бэкенд оставит прежний набор.
+        if (list.length === 0) body.append(key, "");
+        else list.forEach((id) => body.append(key, id));
+      } else if (TRISTATE_FIELDS.includes(key)) {
+        body.append(key, asString(value));
+      } else if (FLAG_FIELDS.includes(key)) {
         body.append(key, value ? "true" : "false");
       } else if (value !== "") {
-        body.append(key, value);
+        body.append(key, String(value));
       }
     }
     files.forEach((file) => body.append("images", file));
@@ -130,15 +195,20 @@ export default function ListingForm({ listing, defaultDealType = "sale" }: Props
   const Err = ({ name }: { name: string }) =>
     errors[name] ? <p className="mt-1 text-xs text-primary">{errors[name]}</p> : null;
 
-  const select = (name: string, label: string, options: DictItem[], allowEmpty = true) => (
-    <div>
+  const select = (
+    name: string,
+    label: string,
+    options: DictItem[],
+    emptyLabel: string | null = "Не указано"
+  ) => (
+    <div key={name}>
       <label className="mb-1 block text-sm text-muted">{label}</label>
       <select
         className="select"
-        value={String(form[name] ?? "")}
+        value={asString(form[name])}
         onChange={(e) => set(name, e.target.value)}
       >
-        {allowEmpty && <option value="">Не указано</option>}
+        {emptyLabel !== null && <option value="">{emptyLabel}</option>}
         {options.map((option) => (
           <option key={option.id} value={String(option.id)}>
             {option.name}
@@ -150,12 +220,24 @@ export default function ListingForm({ listing, defaultDealType = "sale" }: Props
   );
 
   const field = (name: string, label: string, type = "text") => (
-    <div>
+    <div key={name}>
       <label className="mb-1 block text-sm text-muted">{label}</label>
       <input
         type={type}
         className="input"
-        value={String(form[name] ?? "")}
+        value={asString(form[name])}
+        onChange={(e) => set(name, e.target.value)}
+      />
+      <Err name={name} />
+    </div>
+  );
+
+  const textarea = (name: string, label: string, rows = "h-28") => (
+    <div key={name}>
+      <label className="mb-1 block text-sm text-muted">{label}</label>
+      <textarea
+        className={`input ${rows} py-3`}
+        value={asString(form[name])}
         onChange={(e) => set(name, e.target.value)}
       />
       <Err name={name} />
@@ -163,7 +245,7 @@ export default function ListingForm({ listing, defaultDealType = "sale" }: Props
   );
 
   const checkbox = (name: string, label: string) => (
-    <label className="flex items-center gap-2 text-sm">
+    <label key={name} className="flex items-center gap-2 text-sm">
       <input
         type="checkbox"
         className="h-4 w-4"
@@ -173,6 +255,36 @@ export default function ListingForm({ listing, defaultDealType = "sale" }: Props
       {label}
     </label>
   );
+
+  const multi = (name: string, label: string, options: DictItem[]) => {
+    const chosen = asList(form[name]);
+    return (
+      <div key={name}>
+        <label className="mb-2 block text-sm text-muted">{label}</label>
+        <div className="flex flex-wrap gap-2">
+          {options.map((option) => {
+            const id = String(option.id);
+            const active = chosen.includes(id);
+            return (
+              <button
+                type="button"
+                key={id}
+                onClick={() => toggleInList(name, id)}
+                className={`rounded-lg border px-3 py-1.5 text-sm transition ${
+                  active
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-border bg-card text-muted hover:text-fg"
+                }`}
+              >
+                {option.name}
+              </button>
+            );
+          })}
+        </div>
+        <Err name={name} />
+      </div>
+    );
+  };
 
   return (
     <form onSubmit={submit} className="container py-8">
@@ -184,9 +296,10 @@ export default function ListingForm({ listing, defaultDealType = "sale" }: Props
         <section className="card mb-4">
           <h2 className="mb-3 text-sm font-semibold">Основное</h2>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {select("deal_type", "Тип сделки", dictionaries?.deal_types ?? [], false)}
+            {select("deal_type", "Тип сделки", dictionaries?.deal_types ?? [], null)}
             {select("property_type", "Тип объекта", dictionaries?.property_types ?? [])}
             {select("status", "Статус", dictionaries?.statuses ?? [])}
+            {select("stage", "Этап", dictionaries?.stages ?? [])}
             {select(
               "curator",
               "Куратор",
@@ -201,6 +314,7 @@ export default function ListingForm({ listing, defaultDealType = "sale" }: Props
             {select("district", "Район", dictionaries?.districts ?? [])}
             {select("complex", "ЖК", dictionaries?.complexes ?? [])}
             {select("series", "Серия", dictionaries?.series ?? [])}
+            {select("line", "Линия", dictionaries?.lines ?? [])}
             {field("landmark", "Ориентир (виден всем)")}
             {field("address", "Точный адрес (только агентам)")}
           </div>
@@ -211,17 +325,41 @@ export default function ListingForm({ listing, defaultDealType = "sale" }: Props
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {select("rooms", "Комнат", ROOMS)}
             {field("floor", "Этаж", "number")}
-            {field("total_floors", "Этажность", "number")}
+            {field("total_floors", "Всего этажей", "number")}
             {field("area_m2", "Площадь, м²", "number")}
             {select("condition", "Состояние", dictionaries?.conditions ?? [])}
+            {select("wall_material", "Материал стен", dictionaries?.wall_materials ?? [])}
+            {field("built_date", "Год постройки по техпаспорту", "date")}
+            {select("furniture", "Остаётся мебель", dictionaries?.furniture_options ?? [])}
+            {select("has_topography", "Топосъёмка", YES_NO)}
           </div>
         </section>
 
         <section className="card mb-4">
-          <h2 className="mb-3 text-sm font-semibold">Цена</h2>
+          <h2 className="mb-3 text-sm font-semibold">Коммуникации</h2>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {select("heating", "Отопление", dictionaries?.heatings ?? [])}
+            {select("sewerage", "Канализация", dictionaries?.sewerages ?? [])}
+            {select("has_gas", "Газ", YES_NO)}
+            {select("has_electricity", "Электричество", YES_NO)}
+            {select("has_water", "Водоснабжение", YES_NO)}
+          </div>
+        </section>
+
+        <section className="card mb-4">
+          <h2 className="mb-3 text-sm font-semibold">Сделка</h2>
+          <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {field("price", "Цена", "number")}
-            {select("currency", "Валюта", dictionaries?.currencies ?? [], false)}
+            {select("currency", "Валюта", dictionaries?.currencies ?? [], null)}
+          </div>
+          <div className="grid grid-cols-1 gap-4">
+            {multi("documents", "Документы", dictionaries?.documents ?? [])}
+            {multi(
+              "payment_conditions",
+              "Какие условия рассматривает",
+              dictionaries?.payment_conditions ?? []
+            )}
+            {textarea("sale_reason", "Причина продажи (только агентам)", "h-20")}
           </div>
         </section>
 
@@ -238,25 +376,9 @@ export default function ListingForm({ listing, defaultDealType = "sale" }: Props
         <section className="card mb-4">
           <h2 className="mb-3 text-sm font-semibold">Описание и контакты</h2>
           <div className="grid grid-cols-1 gap-3">
-            <div>
-              <label className="mb-1 block text-sm text-muted">Описание (видно всем)</label>
-              <textarea
-                className="input h-28 py-3"
-                value={String(form.description ?? "")}
-                onChange={(e) => set("description", e.target.value)}
-              />
-            </div>
+            {textarea("description", "Описание объекта (видно всем)")}
             {field("owner_phone", "Телефон собственника (только агентам)")}
-            <div>
-              <label className="mb-1 block text-sm text-muted">
-                Внутренняя заметка (только агентам)
-              </label>
-              <textarea
-                className="input h-24 py-3"
-                value={String(form.internal_note ?? "")}
-                onChange={(e) => set("internal_note", e.target.value)}
-              />
-            </div>
+            {textarea("internal_note", "Внутренняя заметка (только агентам)", "h-24")}
           </div>
         </section>
 

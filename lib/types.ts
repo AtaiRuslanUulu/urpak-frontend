@@ -9,6 +9,8 @@ export interface AgentItem {
   id: number;
   full_name: string;
   phone?: string;
+  whatsapp?: string;
+  telegram?: string;
 }
 
 export interface Dictionaries {
@@ -21,6 +23,21 @@ export interface Dictionaries {
   agents: AgentItem[];
   deal_types: DictItem[];
   currencies: DictItem[];
+  stages: DictItem[];
+  lines: DictItem[];
+  wall_materials: DictItem[];
+  heatings: DictItem[];
+  sewerages: DictItem[];
+  furniture_options: DictItem[];
+  documents: DictItem[];
+  payment_conditions: DictItem[];
+}
+
+export interface CuratorAssignment {
+  id: number;
+  agent: number;
+  agent_name: string;
+  assigned_at: string;
 }
 
 export interface ListingImage {
@@ -32,6 +49,7 @@ export interface ListingImage {
 export interface Listing {
   id: number;
   title: string;
+  full_title: string;
   deal_type: "sale" | "rent";
   property_type: DictItem | null;
   district: DictItem | null;
@@ -40,10 +58,23 @@ export interface Listing {
   condition: DictItem | null;
   status: DictItem | null;
   curator: AgentItem | null;
+  stage: DictItem | null;
+  line: DictItem | null;
+  wall_material: DictItem | null;
+  heating: DictItem | null;
+  sewerage: DictItem | null;
+  furniture: DictItem | null;
+  documents: DictItem[];
+  payment_conditions: DictItem[];
   rooms: number | null;
   floor: number | null;
   total_floors: number | null;
   area_m2: string | null;
+  built_date: string | null;
+  has_gas: boolean | null;
+  has_electricity: boolean | null;
+  has_water: boolean | null;
+  has_topography: boolean | null;
   price: string;
   currency: "USD" | "KGS";
   landmark: string;
@@ -53,6 +84,7 @@ export interface Listing {
   is_alternative: boolean;
   is_barter: boolean;
   images: ListingImage[];
+  curator_history: CuratorAssignment[];
   created_at: string;
   updated_at: string;
   deleted_at: string | null;
@@ -60,6 +92,7 @@ export interface Listing {
   owner_phone?: string;
   address?: string;
   internal_note?: string;
+  sale_reason?: string;
 }
 
 export interface Deal {
