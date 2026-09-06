@@ -66,7 +66,11 @@ async function refreshAccess(): Promise<boolean> {
   return true;
 }
 
-async function request<T>(path: string, init: RequestInit = {}, retry = true): Promise<T> {
+async function request<T>(
+  path: string,
+  init: RequestInit = {},
+  retry = true
+): Promise<T> {
   const headers = new Headers(init.headers);
   const access = tokens.access();
   if (access) headers.set("Authorization", `Bearer ${access}`);
@@ -75,7 +79,11 @@ async function request<T>(path: string, init: RequestInit = {}, retry = true): P
     headers.set("Content-Type", "application/json");
   }
 
-  const res = await fetch(`${ROOT}${path}`, { ...init, headers, cache: "no-store" });
+  const res = await fetch(`${ROOT}${path}`, {
+    cache: "no-store",
+    ...init,
+    headers,
+  });
 
   if (res.status === 401 && retry && (await refreshAccess())) {
     return request<T>(path, init, false);
@@ -112,7 +120,9 @@ export const api = {
 
   me: () => request<CurrentUser>("/auth/me/"),
 
-  dictionaries: () => request<Dictionaries>("/dictionaries/"),
+  // Справочники меняются редко, а вызов API стоит около секунды —
+  // разрешаем браузеру брать их из своего кеша.
+  dictionaries: () => request<Dictionaries>("/dictionaries/", { cache: "default" }),
 
   listings: (params: Record<string, string | number | undefined | null>) => {
     const query = toQuery(params);

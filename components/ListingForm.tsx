@@ -488,6 +488,7 @@ export default function ListingForm({ listing, defaultDealType = "sale" }: Props
                       alt=""
                       width={160}
                       height={120}
+                      sizes="128px"
                       className="h-24 w-32 rounded-lg object-cover"
                     />
                     <button

@@ -142,6 +142,8 @@ export default function ListingDetailPage() {
                   alt={listing.title}
                   width={1200}
                   height={800}
+                  sizes="(max-width: 1024px) 100vw, 60vw"
+                  priority
                   className="max-h-[480px] w-full rounded-2xl object-cover"
                 />
                 {photos.length > 1 && (
@@ -159,6 +161,7 @@ export default function ListingDetailPage() {
                           alt=""
                           width={120}
                           height={90}
+                          sizes="96px"
                           className="h-16 w-24 object-cover"
                         />
                       </button>

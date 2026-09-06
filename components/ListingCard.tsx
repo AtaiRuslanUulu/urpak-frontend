@@ -47,6 +47,8 @@ export default function ListingCard({ listing, canManage, onDelete, onRestore }:
             alt={listing.title}
             width={900}
             height={560}
+            // Без sizes браузер тянет вариант 1920px в карточку шириной 343px
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
             className="h-48 w-full object-cover"
           />
         ) : (
